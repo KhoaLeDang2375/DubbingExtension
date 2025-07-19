@@ -79,3 +79,4 @@ class AzureTranslator:
         except requests.exceptions.RequestException as err:
             print(f"⚠️ Translator API error: {err}")
             return None
+

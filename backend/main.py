@@ -147,14 +147,3 @@ async def dubbing(data: VideoRequest):
         logger.info("📌 Sử dụng transcript đã có ngôn ngữ đích, không cần dịch.")
 
     return translated_transcript
-
-    # ----- Nếu bạn muốn tiếp tục TTS thì mở lại phần bên dưới -----
-    # try:
-    #     segments = build_tts_segments(translated_transcript, language=data.target_language)
-    #     ssml = tts.generate_ssml(segments)
-    #     tts.synthesize_to_file(ssml, "output.mp3")
-    #     logger.info("✅ Đã tổng hợp giọng nói thành công.")
-    #     return FileResponse("output.mp3", media_type="audio/mpeg", filename="voiceover.mp3")
-    # except Exception as e:
-    #     logger.exception("❌ Lỗi khi tổng hợp âm thanh.")
-    #     return JSONResponse(status_code=500, content={"status": "error", "detail": str(e)})

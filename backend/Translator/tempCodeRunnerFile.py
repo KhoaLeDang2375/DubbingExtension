@@ -12,11 +12,13 @@ class Handler:
             """
             merged_transcript = []
             flat_translations = [text for chunk in listTextAfterTranslated for text in chunk]
+
             if len(flat_translations) != len(transcript):
                 raise ValueError("⚠️ Số câu đã dịch không khớp với số câu trong transcript.")
+
             for i, entry in enumerate(transcript):
                 new_entry = entry.copy()
-                new_entry['text_translated'] = flat_translations[i]
+                new_entry['text_vi'] = flat_translations[i]
                 merged_transcript.append(new_entry)
 
             return merged_transcript
@@ -49,3 +51,8 @@ class Handler:
             chunks.append(current_chunk)
 
         return chunks
+handler = Handler()
+transcript = YouTubeTranscriptApi.get_transcript('UVKyS1LMDjk')
+chunks =handler.split_transcript(transcript)
+translator = GenAITranslator(video_id='UVKyS1LMDjk')
+result = translator.translate(transcript_chunk=chunks)
