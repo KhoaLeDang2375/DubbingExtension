@@ -113,14 +113,15 @@ def build_tts_segments(transcript: List[Dict], language: str = "vi") -> List[Dic
     """
     segments = []
     for entry in transcript:
-        if "text_vi" in entry and language in entry["text_vi"]:
-            text = entry["text_vi"][language]
+        if "text_translated" in entry and language in entry["text_translated"]:
+            text = entry["text_translated"][language]
         elif "text" in entry:
             text = entry["text"]
         else:
             raise ValueError(f"❌ Không có nội dung hợp lệ trong đoạn transcript: {entry}")
         segments.append({
             "text": text,
+            "start":entry['start'],
             "duration": entry["duration"]
         })
 
@@ -145,5 +146,14 @@ async def dubbing(data: VideoRequest):
     else:
         translated_transcript = transcript_info['transcript']
         logger.info("📌 Sử dụng transcript đã có ngôn ngữ đích, không cần dịch.")
-
-    return translated_transcript
+    try:
+        segments = build_tts_segments(translated_transcript)
+        logger.info(f"🔊 Đang tạo SSML cho {len(segments)} đoạn.")
+        ssml = tts.generate_ssml(segments)
+        logger.info(f"📝 SSML đã được tạo:\n{ssml[:500]}...")  # Log 500 ký tự đầu
+        output_file = f"TTS_results/{data.video_id}_dubbing.mp3"
+        tts.synthesize_to_file(ssml,output_file)
+        logger.info(f"✅ Đã sinh file âm thanh: {output_file}")
+    except Exception as e:
+        logger.exception(f"❌ Lỗi khi synthesize TTS: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS synthesis failed: {str(e)}")

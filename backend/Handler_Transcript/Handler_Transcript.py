@@ -20,7 +20,7 @@ class Handler:
                 merged_transcript.append(new_entry)
 
             return merged_transcript
-    def split_transcript(self, entries, max_chars=4500, max_items=100):
+    def split_transcript(self, entries,video_id, max_chars=4500, max_items=100):
         """
         Chia transcript đầu vào thành các chunk,
         mỗi chunk là list các dict gốc: {text, start, duration},
@@ -29,7 +29,7 @@ class Handler:
         chunks = []
         current_chunk = []
         current_chunk_len = 0
-
+        index =0
         for entry in entries:
             sentence = entry['text'].strip()
             sentence_len = len(sentence)
@@ -40,12 +40,13 @@ class Handler:
                 current_chunk_len += sentence_len + 1
             else:
                 # Đóng chunk lại và bắt đầu chunk mới
-                chunks.append(current_chunk)
+                index+=1
+                chunks.append({'id':f'{video_id}_{index}',"chunk":current_chunk})
                 current_chunk = [entry['text']]
                 current_chunk_len = sentence_len + 1
 
         # Thêm chunk cuối nếu còn
         if current_chunk:
-            chunks.append(current_chunk)
+            chunks.append({'id':f'{video_id}_{index}',"chunk":current_chunk})
 
         return chunks
