@@ -1,52 +1,72 @@
+from loguru import logger
+from typing import List, Dict
+from fastapi import HTTPException
 class Handler:   
-    def mergeTranslatedTextToTranscript(self,transcript, listTextAfterTranslated):
-            """
-            Gắn kết quả dịch từ listTextAfterTranslated vào từng entry của transcript gốc.
-
-            Args:
-                transcript: List[Dict] — các đoạn văn bản gốc [{text, start, duration, ...}]
-                listTextAfterTranslated: List[List[str]] — các đoạn văn bản đã dịch (theo chunk)
-
-            Returns:
-                List[Dict] — transcript có thêm field `text_vi` là bản dịch.
-            """
-            merged_transcript = []
-            flat_translations = [text for chunk in listTextAfterTranslated for text in chunk]
-            if len(flat_translations) != len(transcript):
-                raise ValueError("⚠️ Số câu đã dịch không khớp với số câu trong transcript.")
-            for i, entry in enumerate(transcript):
-                new_entry = entry.copy()
-                new_entry['text_translated'] = flat_translations[i]
-                merged_transcript.append(new_entry)
-
-            return merged_transcript
-    def split_transcript(self, entries,video_id, max_chars=4500, max_items=100):
-        """
-        Chia transcript đầu vào thành các chunk,
-        mỗi chunk là list các dict gốc: {text, start, duration},
-        sao cho tổng độ dài text trong 1 chunk không vượt quá max_chars.
-        """
+    def split_transcript(self, entries, video_id, max_chars=4500, max_items=100):
         chunks = []
         current_chunk = []
         current_chunk_len = 0
-        index =0
+        index = 0
         for entry in entries:
             sentence = entry['text'].strip()
             sentence_len = len(sentence)
-
-            # Nếu còn chỗ trong chunk hiện tại
+            # Giữ lại dict gốc thay vì chỉ text
             if (current_chunk_len + sentence_len <= max_chars) and (len(current_chunk) < max_items):
-                current_chunk.append(entry['text'])
+                current_chunk.append(entry)
                 current_chunk_len += sentence_len + 1
             else:
-                # Đóng chunk lại và bắt đầu chunk mới
-                index+=1
-                chunks.append({'id':f'{video_id}_{index}',"chunk":current_chunk})
-                current_chunk = [entry['text']]
+                index += 1
+                chunks.append({'id': f'{video_id}_{index}', "chunk": current_chunk})
+                current_chunk = [entry]
                 current_chunk_len = sentence_len + 1
-
-        # Thêm chunk cuối nếu còn
         if current_chunk:
-            chunks.append({'id':f'{video_id}_{index}',"chunk":current_chunk})
-
+            index += 1
+            chunks.append({'id': f'{video_id}_{index}', "chunk": current_chunk})
         return chunks
+    def merge_chunk_translation(self, chunk: List[Dict], translated_result: List[Dict], target_language: str = "vi") -> List[Dict]:
+        """
+        Merge dữ liệu chunk gốc và kết quả dịch từ translator (Azure hoặc GenAI).
+        Đảm bảo mỗi entry có text_translated, start, duration cho TTS.
+
+        Args:
+            chunk: List[Dict] - danh sách các câu gốc [{text, start, duration, ...}]
+            translated_result: List[Dict] - kết quả dịch [{lang_code: translated_text}, ...]
+            target_language: str - mã ngôn ngữ đích
+
+        Returns:
+            List[Dict] - danh sách entry đã merge, mỗi entry có text_translated, start, duration
+        """
+        if not chunk or not translated_result or len(chunk) != len(translated_result):
+            raise ValueError("Số lượng câu gốc và câu đã dịch không khớp.")
+
+        merged = []
+        for entry, trans in zip(chunk, translated_result):
+            new_entry = {
+                "text_translated": trans.get(target_language) if isinstance(trans, dict) else trans,
+                "start": entry.get("start"),
+                "duration": entry.get("duration")
+            }
+            merged.append(new_entry)
+        return merged
+    def mergeTranslatedTextToTranscript(self, transcript: List[Dict], merged_chunks: List[List[Dict]]) -> List[Dict]:
+        """
+        Cập nhật transcript gốc với trường text_translated từ danh sách các kết quả merge_chunk_translation.
+
+        Args:
+            transcript: List[Dict] - transcript gốc [{text, start, duration, ...}]
+            merged_chunks: List[List[Dict]] - danh sách các chunk đã merge, mỗi chunk là list entry có text_translated
+
+        Returns:
+            List[Dict] - transcript đã cập nhật text_translated
+        """
+        # Flatten merged_chunks thành một list các entry đã dịch
+        merged_entries = [entry for chunk in merged_chunks for entry in chunk]
+        if len(transcript) != len(merged_entries):
+            raise ValueError("⚠️ Số lượng entry gốc và entry đã dịch không khớp.")
+
+        updated_transcript = []
+        for orig_entry, merged_entry in zip(transcript, merged_entries):
+            new_entry = orig_entry.copy()
+            new_entry['text_translated'] = merged_entry.get('text_translated')
+            updated_transcript.append(new_entry)
+        return updated_transcript

@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from youtube_transcript_api import (
     YouTubeTranscriptApi,
@@ -10,17 +10,15 @@ from youtube_transcript_api import (
 )
 from pydantic import BaseModel
 from typing import List, Dict
-
 from Translator.translator import AzureTranslator
 from Translator.genAITranslator import GenAITranslator
 from Text_To_Speech.TextToSpeech import TextToSpeechModule
 from Handler_Transcript.Handler_Transcript import Handler
 from loguru import logger
-
+from redis_cache.cache import multiprocessingForTTSAndTranslator
 # ------------------ Cấu hình ứng dụng ------------------
 
 app = FastAPI()
-tts = TextToSpeechModule()
 transcriptHandler = Handler()
 
 app.add_middleware(
@@ -91,43 +89,6 @@ def get_transcript(data: VideoRequest) -> Dict:
     except Exception as e:
         logger.exception("❌ Lỗi không xác định khi lấy transcript.")
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
-
-def make_caption(transcript: List[Dict], translator, video_id: str = None) -> List[Dict]:
-    """
-    Dịch transcript sang ngôn ngữ đích. Truyền video_id nếu translator cần.
-    """
-    try:
-        chunks = transcriptHandler.split_transcript(transcript)
-        logger.info(f"📤 Đã chia transcript thành {len(chunks)} đoạn.")
-        translated_chunks = [translator.translate(chunk) for chunk in chunks]
-        logger.info("✅ Đã dịch xong toàn bộ transcript.")
-        return transcriptHandler.mergeTranslatedTextToTranscript(transcript, translated_chunks)
-
-    except Exception as e:
-        logger.exception("❌ Lỗi khi dịch transcript.")
-        raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
-
-def build_tts_segments(transcript: List[Dict], language: str = "vi") -> List[Dict]:
-    """
-    Chuẩn bị dữ liệu để tổng hợp giọng nói.
-    """
-    segments = []
-    for entry in transcript:
-        if "text_translated" in entry and language in entry["text_translated"]:
-            text = entry["text_translated"][language]
-        elif "text" in entry:
-            text = entry["text"]
-        else:
-            raise ValueError(f"❌ Không có nội dung hợp lệ trong đoạn transcript: {entry}")
-        segments.append({
-            "text": text,
-            "start":entry['start'],
-            "duration": entry["duration"]
-        })
-
-    logger.info(f"📦 Đã xây dựng {len(segments)} đoạn âm thanh cho TTS.")
-    return segments
-
 # ------------------ Endpoint chính ------------------
 
 @app.post("/dubbing")
@@ -136,24 +97,36 @@ async def dubbing(data: VideoRequest):
     translator = get_translator(data.translator, video_id=data.video_id)
 
     transcript_info = get_transcript(data)
+    chunks = transcriptHandler.split_transcript(transcript_info['transcript'], data.video_id)
+    logger.info(f"📤 Đã chia transcript thành {len(chunks)} đoạn.")
 
     if not transcript_info['flagTargetLang']:
-        translated_transcript = make_caption(
-            transcript=transcript_info['transcript'],
-            translator=translator,
-            video_id=data.video_id
+        redis_config = {"host": "172.21.106.92", "port": 6379, "db": 0}
+        multiprocessingRes = multiprocessingForTTSAndTranslator(
+            transcript_chunks=chunks,
+            translator_func=translator.translate,
+            video_id=data.video_id,
+            redis_config=redis_config
         )
+        # Lấy danh sách BytesIO
+        audio_bytesio_list = multiprocessingRes['ListBytesIO']
+        # Trả về chunk đầu tiên (hoặc bạn có thể trả về chunk theo index)
+        if audio_bytesio_list and len(audio_bytesio_list) > 0:
+            audio_bytesio_list[0].seek(0)
+            return StreamingResponse(audio_bytesio_list[0], media_type="audio/mpeg")
+        else:
+            raise HTTPException(status_code=404, detail="No audio found")
     else:
-        translated_transcript = transcript_info['transcript']
+        segments = transcript_info['transcript']
         logger.info("📌 Sử dụng transcript đã có ngôn ngữ đích, không cần dịch.")
-    try:
-        segments = build_tts_segments(translated_transcript)
-        logger.info(f"🔊 Đang tạo SSML cho {len(segments)} đoạn.")
-        ssml = tts.generate_ssml(segments)
-        logger.info(f"📝 SSML đã được tạo:\n{ssml[:500]}...")  # Log 500 ký tự đầu
-        output_file = f"TTS_results/{data.video_id}_dubbing.mp3"
-        tts.synthesize_to_file(ssml,output_file)
-        logger.info(f"✅ Đã sinh file âm thanh: {output_file}")
-    except Exception as e:
-        logger.exception(f"❌ Lỗi khi synthesize TTS: {e}")
-        raise HTTPException(status_code=500, detail=f"TTS synthesis failed: {str(e)}")
+        try:
+            tts = TextToSpeechModule()
+            logger.info(f"🔊 Đang tạo SSML cho {len(segments)} đoạn.")
+            ssml = tts.generate_ssml(segments)
+            logger.info(f"📝 SSML đã được tạo:\n{ssml[:500]}...")  # Log 500 ký tự đầu
+            audio_bytesio = tts.ssml_to_bytesio(ssml)
+            audio_bytesio.seek(0)
+            return StreamingResponse(audio_bytesio, media_type="audio/mpeg")
+        except Exception as e:
+            logger.exception(f"❌ Lỗi khi synthesize TTS: {e}")
+            raise HTTPException(status_code=500, detail=f"TTS synthesis failed: {str(e)}")

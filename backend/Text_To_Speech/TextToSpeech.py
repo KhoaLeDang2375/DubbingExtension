@@ -67,12 +67,12 @@ class TextToSpeechModule:
         
         # Validate segments data
         for i, seg in enumerate(segments):
-            if not all(key in seg for key in ['text', 'duration']):
-                raise ValueError(f"Segment {i} missing required keys: 'text', 'duration'")
+            if not all(key in seg for key in ['text_translated', 'duration']):
+                raise ValueError(f"Segment {i} missing required keys: 'text_translated', 'duration'")
             if seg['duration'] <= 0:
                 raise ValueError(f"Segment {i} has invalid duration: {seg['duration']}")
         
-        total_chars = sum(len(seg['text'].strip()) for seg in segments if seg['text'].strip())
+        total_chars = sum(len(seg['text_translated'].strip()) for seg in segments if seg['text_translated'].strip())
         total_duration = sum(seg['duration'] for seg in segments)
         
         if total_duration == 0 or total_chars == 0:
@@ -84,7 +84,7 @@ class TextToSpeechModule:
         rates = []
         
         for i, seg in enumerate(segments):
-            text_length = len(seg['text'].strip())
+            text_length = len(seg['text_translated'].strip()) if seg.get('text_translated') else 0
             if text_length == 0:
                 rates.append("0%")
                 continue
@@ -130,7 +130,7 @@ class TextToSpeechModule:
         
         for i, (seg, rate) in enumerate(zip(segments, rates)):
             # Escape XML characters
-            text = self._escape_xml(seg['text'].strip())
+            text = self._escape_xml(seg['text_translated'].strip()) if seg.get('text_translated') else ""
             if text:  # Chỉ thêm nếu có text
                 ssml_parts.append(f'<prosody rate="{rate}">{text}</prosody>')
             
