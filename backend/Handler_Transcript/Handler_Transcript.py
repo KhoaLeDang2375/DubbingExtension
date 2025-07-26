@@ -2,7 +2,7 @@ from loguru import logger
 from typing import List, Dict
 from fastapi import HTTPException
 class Handler:   
-    def split_transcript(self, entries, video_id, max_chars=4500, max_items=100):
+    def split_transcript(self, entries, video_id, max_chars=2000, max_items=100):
         chunks = []
         current_chunk = []
         current_chunk_len = 0

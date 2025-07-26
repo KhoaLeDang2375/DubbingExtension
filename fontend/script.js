@@ -1,4 +1,5 @@
-document.getElementById("send-btn").addEventListener("click", async () => {
+
+  document.getElementById("send-btn").addEventListener("click", async () => {
   const videoId = document.getElementById("video-id").value;
   const targetLang = document.getElementById("target-lang").value;
   const translator = document.getElementById("translator").value;
@@ -48,3 +49,5 @@ document.getElementById("send-btn").addEventListener("click", async () => {
     status.textContent = "❌ Lỗi khi gửi yêu cầu hoặc phát âm thanh.";
   }
 });
+
+
