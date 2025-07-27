@@ -55,8 +55,10 @@ def get_translator(name: str, video_id: str = None):
 
 class VideoRequest(BaseModel):
     video_id: str
-    target_language: str = "vi"
-    translator: str = "AzureTranslator"
+    source_lang: str =''
+    target_language: str = "vi",
+    translator: str = "AzureTranslator",
+    tts_voice : str
 
 # ------------------ Hàm xử lý phụ trợ ------------------
 

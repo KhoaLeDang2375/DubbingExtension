@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube TTS Dubber",
+  "version": "1.0",
+  "description": "Phát TTS song song với video YouTube",
+  "permissions": [
+    "scripting",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "options.html",
+    "default_title": "YouTube TTS Dubber"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+      "js": ["content_script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
