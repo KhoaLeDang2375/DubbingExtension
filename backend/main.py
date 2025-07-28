@@ -24,7 +24,7 @@ transcriptHandler = Handler()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    # allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -107,7 +107,10 @@ async def dubbing(data: VideoRequest):
         multiprocessingRes = multiprocessingForTTSAndTranslator(
             transcript_chunks=chunks,
             translator_func=translator.translate,
+            source_lang = data.source_lang,
+            target_lang = data.target_language,
             video_id=data.video_id,
+            tts_voice = data.tts_voice,
             redis_config=redis_config
         )
         # Lấy danh sách BytesIO
@@ -115,20 +118,20 @@ async def dubbing(data: VideoRequest):
         # Trả về chunk đầu tiên (hoặc bạn có thể trả về chunk theo index)
         if audio_bytesio_list and len(audio_bytesio_list) > 0:
             audio_bytesio_list[0].seek(0)
-            return StreamingResponse(audio_bytesio_list[0], media_type="audio/mpeg")
+            return StreamingResponse(audio_bytesio_list[0], media_type="audio/wav")
         else:
             raise HTTPException(status_code=404, detail="No audio found")
     else:
         segments = transcript_info['transcript']
         logger.info("📌 Sử dụng transcript đã có ngôn ngữ đích, không cần dịch.")
         try:
-            tts = TextToSpeechModule()
+            tts = TextToSpeechModule(voice= data.tts_voice)
             logger.info(f"🔊 Đang tạo SSML cho {len(segments)} đoạn.")
             ssml = tts.generate_ssml(segments)
             logger.info(f"📝 SSML đã được tạo:\n{ssml[:500]}...")  # Log 500 ký tự đầu
             audio_bytesio = tts.ssml_to_bytesio(ssml)
             audio_bytesio.seek(0)
-            return StreamingResponse(audio_bytesio, media_type="audio/mpeg")
+            return StreamingResponse(audio_bytesio, media_type="audio/wav")
         except Exception as e:
             logger.exception(f"❌ Lỗi khi synthesize TTS: {e}")
             raise HTTPException(status_code=500, detail=f"TTS synthesis failed: {str(e)}")

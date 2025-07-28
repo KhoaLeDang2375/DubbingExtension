@@ -23,16 +23,29 @@ class Dubbing {
                 ["sourceLanguage", "targetLanguage", "speakerVoice", "translatorEngine"],
                 (result) => {
                     if (chrome.runtime.lastError) {
-                        console.error("❌ Lỗi khi load settings:", chrome.runtime.lastError);
-                        reject(chrome.runtime.lastError);
+                        console.warn("⚠️ Lỗi khi load settings, dùng mặc định:", chrome.runtime.lastError);
+                        resolve({
+                            sourceLanguage: 'auto',
+                            targetLanguage: 'vi',
+                            speakerVoice: 'vi-VN-HoaiMyNeural',
+                            translatorEngine: 'AzureTranslator'
+                        });
                     } else {
-                        console.log("✅ Đã load settings:", result);
-                        resolve(result);
+                        // Gán giá trị mặc định nếu một vài trường bị thiếu
+                        const settings = {
+                            sourceLanguage: result.sourceLanguage || 'auto',
+                            targetLanguage: result.targetLanguage || 'vi',
+                            speakerVoice: result.speakerVoice || 'vi-VN-HoaiMyNeural',
+                            translatorEngine: result.translatorEngine || 'AzureTranslator'
+                        };
+                        console.log("✅ Đã load settings:", settings);
+                        resolve(settings);
                     }
                 }
             );
         });
     }
+
 
     buildPayload(settings) {
         const payload = {
@@ -61,11 +74,8 @@ class Dubbing {
             }
 
             const arrayBuffer = await response.arrayBuffer();
-            const audioBlob = new Blob([arrayBuffer], { type: "audio/wav" });
-
-            const audioUrl = URL.createObjectURL(audioBlob);
-            console.log(" Đã nhận audio, tạo URL:", audioUrl);
-            return audioUrl;
+            const bufferData = Array.from(new Uint8Array(arrayBuffer)); // convert to plain array
+            return { 'audioData': bufferData }; // gửi cho content script
         } catch (error) {
             console.error(" Lỗi khi gửi request:", error);
             this.setStatus("Lỗi khi gửi request đến server.");
@@ -91,8 +101,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const dubbing = new Dubbing(videoId);
 
         dubbing.init()
-            .then(audioUrl => {
-                sendResponse({ audioUrl });
+            .then(({ audioData }) => {
+                sendResponse({ audioData });
             })
             .catch(error => {
                 console.error(" Gửi âm thanh thất bại:", error);

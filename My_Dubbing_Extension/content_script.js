@@ -47,7 +47,8 @@ function injectButton() {
       alert("❌ Không tìm thấy video.");
       return;
     }
-
+    video.muted = true; // Mute default audio
+    video.pause()
     const videoId = getYouTubeVideoId();
     if (!videoId) {
       alert("❌ Không lấy được video ID.");
@@ -55,10 +56,19 @@ function injectButton() {
     }
 
     chrome.runtime.sendMessage({ type: "GET_TTS_URL", videoId }, (response) => {
-      if (response && response.audioUrl) {
-        const ttsAudio = new Audio(response.audioUrl);
-        ttsAudio.crossOrigin = "anonymous";
+    if (response && response.audioData) {
+      const byteArray = new Uint8Array(response.audioData);
+      const audioBlob = new Blob([byteArray], { type: "audio/wav" });
+      const audioUrl = URL.createObjectURL(audioBlob);
 
+      const ttsAudio = new Audio(audioUrl);
+      ttsAudio.crossOrigin = "anonymous";
+      video.play()
+      // 👇 Play ngay trong click để tránh bị Chrome chặn
+      ttsAudio.play().then(() => {
+        console.log("✅ TTS Audio playing");
+
+        // Đồng bộ với video
         video.addEventListener("play", () => {
           ttsAudio.currentTime = video.currentTime;
           ttsAudio.play();
@@ -70,12 +80,15 @@ function injectButton() {
         });
 
         alert("🔊 Lồng tiếng đã được kích hoạt!");
-      } else {
-        alert("❌ Không thể lấy audio từ backend.");
-      }
-    });
+      }).catch((err) => {
+        console.warn("⚠️ Không thể play audio:", err);
+        alert("⚠️ Chrome không cho phép tự động phát âm thanh. Hãy tương tác lại.");
+      });
+    } else {
+      alert("❌ Không thể lấy audio từ backend.");
+    }
   });
-
+});
   container.appendChild(btn);
 }
 
