@@ -1,59 +1,49 @@
 class Dubbing {
     constructor(videoId, statusElement = null) {
         this.videoId = videoId;
-        this.statusElement = statusElement; // DOM element để cập nhật trạng thái (nếu có)
+        this.statusElement = statusElement;
     }
 
-    async init() {
+    async init(list_chunks_id, need_translator= true) {
         try {
             const settings = await this.loadSettings();
-            const payload = this.buildPayload(settings);
+            const payload = this.buildPayload(settings,list_chunks_id,need_translator);
             const audioBlob = await this.sendRequest(payload);
             return audioBlob;
         } catch (error) {
             console.error("❌ Lỗi trong init():", error);
             this.setStatus("Đã xảy ra lỗi trong quá trình xử lý.");
-            throw error; // để hàm gọi biết đã có lỗi
+            throw error;
         }
     }
 
     loadSettings() {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             chrome.storage.sync.get(
                 ["sourceLanguage", "targetLanguage", "speakerVoice", "translatorEngine"],
                 (result) => {
-                    if (chrome.runtime.lastError) {
-                        console.warn("⚠️ Lỗi khi load settings, dùng mặc định:", chrome.runtime.lastError);
-                        resolve({
-                            sourceLanguage: 'auto',
-                            targetLanguage: 'vi',
-                            speakerVoice: 'vi-VN-HoaiMyNeural',
-                            translatorEngine: 'AzureTranslator'
-                        });
-                    } else {
-                        // Gán giá trị mặc định nếu một vài trường bị thiếu
-                        const settings = {
-                            sourceLanguage: result.sourceLanguage || 'auto',
-                            targetLanguage: result.targetLanguage || 'vi',
-                            speakerVoice: result.speakerVoice || 'vi-VN-HoaiMyNeural',
-                            translatorEngine: result.translatorEngine || 'AzureTranslator'
-                        };
-                        console.log("✅ Đã load settings:", settings);
-                        resolve(settings);
-                    }
+                    const settings = {
+                        sourceLanguage: result.sourceLanguage || 'auto',
+                        targetLanguage: result.targetLanguage || 'vi',
+                        speakerVoice: result.speakerVoice || 'vi-VN-HoaiMyNeural',
+                        translatorEngine: result.translatorEngine || 'AzureTranslator'
+                    };
+                    console.log("✅ Đã load settings:", settings);
+                    resolve(settings);
                 }
             );
         });
     }
 
-
-    buildPayload(settings) {
+    buildPayload(settings, list_chunks_id,need_translator = true) {
         const payload = {
             video_id: this.videoId,
+            list_chunks_id: list_chunks_id,
             source_language: settings.sourceLanguage,
             target_language: settings.targetLanguage,
             translator: settings.translatorEngine,
-            tts_voice: settings.speakerVoice
+            tts_voice: settings.speakerVoice,
+            need_translator: need_translator
         };
         console.log("🛠️ Payload đã tạo:", payload);
         return payload;
@@ -61,53 +51,76 @@ class Dubbing {
 
     async sendRequest(payload) {
         this.setStatus("⏳ Đang gửi yêu cầu và chờ âm thanh từ server...");
-
         try {
             const response = await fetch("http://127.0.0.1:8000/dubbing", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
             });
-
             if (!response.ok) {
-                throw new Error(`Lỗi server: ${response.status}`);
+            throw new Error(`Lỗi server: ${response.status}`);
             }
-
             const arrayBuffer = await response.arrayBuffer();
-            const bufferData = Array.from(new Uint8Array(arrayBuffer)); // convert to plain array
-            return { 'audioData': bufferData }; // gửi cho content script
+            if (arrayBuffer.byteLength === 0) {
+            console.error("❌ Dữ liệu âm thanh rỗng từ server");
+            throw new Error("Dữ liệu âm thanh rỗng");
+            }
+            const uint8Array = new Uint8Array(arrayBuffer);
+            console.log(`[Background] Kích thước arrayBuffer: ${arrayBuffer.byteLength}`);
+            return { audioData: Array.from(uint8Array) };
         } catch (error) {
-            console.error(" Lỗi khi gửi request:", error);
+            console.error("❌ Lỗi khi gửi request:", error);
             this.setStatus("Lỗi khi gửi request đến server.");
             throw error;
         }
     }
 
+
     setStatus(text) {
         if (this.statusElement) {
             this.statusElement.textContent = text;
         } else {
-            console.log(" Trạng thái:", text);
+            console.log("📢 Trạng thái:", text);
         }
     }
 }
 
-// Lắng nghe từ content script
+// 🔁 Lắng nghe message từ content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.type === "GET_TTS_URL") {
-        const videoId = request.videoId;
-        console.log(" Nhận yêu cầu GET_TTS_URL từ content.js với videoId:", videoId);
-
-        const dubbing = new Dubbing(videoId);
-
-        dubbing.init()
-            .then(({ audioData }) => {
+    // Xử lý async trong event listener
+    (async () => {
+        if (request.type === "GET_TTS_URL") {
+            try {
+                const dubbing = new Dubbing(request.videoId);
+                const { audioData } = await dubbing.init(request.list_chunks_id, request.need_translator);
+                console.log(`[Background] Kích thước audioData gửi đi cho chunk ${request.list_chunks_id}: ${audioData.byteLength}`);
+                console.log("[Background] audioData type:", audioData.constructor.name);
                 sendResponse({ audioData });
-            })
-            .catch(error => {
-                console.error(" Gửi âm thanh thất bại:", error);
+            } catch (error) {
                 sendResponse({ error: error.message || "Unknown error" });
-            });
-        return true; // Bắt buộc để cho phép async sendResponse
-    }
+            }
+        }
+
+        else if (request.type === "GET_TOTAL_CHUNK") {
+            try {
+                const res = await fetch("http://127.0.0.1:8000/video_split", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ video_id: request.videoId })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Lỗi server: ${res.status}`);
+                }
+
+                const data = await res.json();
+                sendResponse({ transcriptInfo: data });
+            } catch (error) {
+                console.error("❌ Lỗi khi gửi request GET_TOTAL_CHUNK:", error);
+                sendResponse({ error: error.message || "Unknown error" });
+            }
+        }
+    })();
+
+    return true; // Bắt buộc để giữ sendResponse cho async
 });

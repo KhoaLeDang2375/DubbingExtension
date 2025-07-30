@@ -2,11 +2,10 @@ from loguru import logger
 from typing import List, Dict
 from fastapi import HTTPException
 class Handler:   
-    def split_transcript(self, entries, video_id, max_chars=2000, max_items=100):
+    def split_transcript(self, entries, video_id, max_chars=200, max_items=5):
         chunks = []
         current_chunk = []
         current_chunk_len = 0
-        index = 0
         for entry in entries:
             sentence = entry['text'].strip()
             sentence_len = len(sentence)
@@ -15,12 +14,12 @@ class Handler:
                 current_chunk.append(entry)
                 current_chunk_len += sentence_len + 1
             else:
-                index += 1
+                index = current_chunk[0]['start']
                 chunks.append({'id': f'{video_id}_{index}', "chunk": current_chunk})
                 current_chunk = [entry]
                 current_chunk_len = sentence_len + 1
         if current_chunk:
-            index += 1
+            index = current_chunk[0]['start']
             chunks.append({'id': f'{video_id}_{index}', "chunk": current_chunk})
         return chunks
     def merge_chunk_translation(self, chunk: List[Dict], translated_result: List[Dict], target_language: str = "vi") -> List[Dict]:

@@ -39,13 +39,17 @@ class TextToSpeechModule:
         self.logger = logging.getLogger(__name__)
 
     def _set_output_format(self, output_format: str):
-        """Thiết lập định dạng output một cách tối ưu"""
+        """Thiết lập định dạng output với hỗ trợ WebM"""
         if self.current_format == output_format:
             return
             
         format_map = {
             "mp3": speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3,
-            "wav": speechsdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm
+            "wav": speechsdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm,
+            # Thêm WebM support (nếu Azure Speech SDK hỗ trợ)
+            "webm": speechsdk.SpeechSynthesisOutputFormat.Webm16Khz16BitMonoOpus,
+            # Hoặc sử dụng format tương thích với MediaSource
+            "ogg": speechsdk.SpeechSynthesisOutputFormat.Ogg16Khz16BitMonoOpus
         }
         
         if output_format not in format_map:
