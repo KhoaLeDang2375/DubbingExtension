@@ -38,18 +38,18 @@ class GenAITranslator:
         genai.configure(api_key=self.geminiAPIKey)
         self.model = genai.GenerativeModel("gemini-2.0-flash")
         logging.info("Khởi tạo thành công GenAITranslator.")
-    def translate(self,  transcript_chunk: Union[str, List[str]],target_language='vi',) -> Optional[List[Dict[str, str]]]:
+    def translate(self,  texts: Union[str, List[str]],source_lang = "",target_langs='vi',) -> Optional[List[Dict[str, str]]]:
         # Chuẩn hóa đầu vào
-        if isinstance(transcript_chunk, str):
-            transcript_chunk = [transcript_chunk]
-        if not transcript_chunk:
+        if isinstance(texts, str):
+            texts = [texts]
+        if not texts:
             logging.warning("Transcript chunk rỗng.")
             return []
         try:
             # Lấy metadata từ YouTube
             metadata = self.metadata
             # Tạo prompt dịch
-            prompt = makePrompt(metadata['title'], metadata['description'], metadata['tags'], target_language, transcript_chunk)
+            prompt = makePrompt(metadata['title'], metadata['description'], metadata['tags'], target_langs, texts)
             # Gọi model Gemini
             logging.info(f"Gọi mô hình Gemini để dịch transcript video_id: {self.video_id}")
             response = self.model.generate_content(prompt)
@@ -57,7 +57,7 @@ class GenAITranslator:
             response = extract_json_content(response.text)
             result = ast.literal_eval(response)
             actual_list = result  # Không cần parse lại
-            return [{target_language: item} for item in actual_list]
+            return [{target_langs: item} for item in actual_list]
         except Exception as e:
             logging.exception(f"Lỗi trong quá trình dịch: {e}")
             return []
@@ -82,10 +82,10 @@ def extract_json_content(response):
     
     # Nếu không tìm thấy, trả về nguyên bản
     return response.strip()
-def makePrompt(video_title: str, video_description: str, video_tags: list, target_language='vi', transcript_chunk=[]) -> str:
-    chunk_json_array = ',\n  '.join([f'"{chunk}"' for chunk in transcript_chunk])
+def makePrompt(video_title: str, video_description: str, video_tags: list, target_langs='vi', texts=[]) -> str:
+    chunk_json_array = ',\n  '.join([f'"{chunk}"' for chunk in texts])
     return f"""You are a professional translator and subtitle expert.
-        Your task is to translate EACH sentence in the given JSON array **individually and separately** into {target_language}.
+        Your task is to translate EACH sentence in the given JSON array **individually and separately** into {target_langs}.
 
         ## CONTEXT:
         - Video Title: "{video_title}"
@@ -99,7 +99,7 @@ def makePrompt(video_title: str, video_description: str, video_tags: list, targe
 
         ## REQUIREMENTS:
         1. Translate **each element separately**, preserving order and count (1:1 mapping).
-        2. Output MUST be a JSON array with the same number of strings as the input (i.e., {len(transcript_chunk)}).
+        2. Output MUST be a JSON array with the same number of strings as the input (i.e., {len(texts)}).
         3. DO NOT merge sentences. DO NOT split any sentence.
         4. DO NOT include any additional explanation, commentary, or formatting.
         5. DO NOT change order or content type.

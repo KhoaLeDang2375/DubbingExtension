@@ -80,3 +80,15 @@ class AzureTranslator:
             print(f"⚠️ Translator API error: {err}")
             return None
 
+if __name__ == "__main__":
+    translator = AzureTranslator()
+    result = translator.translate(
+        texts=["Xin chào, tôi tên là Khoa."],
+        source_lang="vi",
+        target_langs="ja"
+    )
+
+    if result is None:
+        print("❌ Lỗi: Không nhận được kết quả dịch.")
+    else:
+        print("✅ Kết quả dịch:", result)
