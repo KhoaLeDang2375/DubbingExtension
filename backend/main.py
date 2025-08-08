@@ -1,4 +1,7 @@
 import os
+from fastapi.responses import JSONResponse
+import base64
+
 import json
 import redis
 from fastapi import FastAPI, HTTPException
@@ -107,6 +110,7 @@ async def split(data: VideoRequest):
     
     return {
         'total': len(list_chunks_id),
+        'info' : transcript_info,
         'list_chunks': [
                         item.split('_')[1]
                         for item in list_chunks_id
@@ -130,11 +134,23 @@ async def dubbing(data: DubbingRequest):
             tts_voice=data.tts_voice,
             redis_config=redis_config
         )
-        audio_bytesio_list = multiprocessing_res['ListBytesIO']
-        if audio_bytesio_list:
-            audio_bytesio_list[0].seek(0)
-            return StreamingResponse(audio_bytesio_list[0], media_type="audio/mpeg")
+
+        audio_chunks = multiprocessing_res['audio_chunks']
+
+        if audio_chunks:
+            result = []
+            for item in audio_chunks:
+                item["audio_bytesio"].seek(0)
+                audio_base64 = base64.b64encode(item["audio_bytesio"].read()).decode('utf-8')
+                result.append({
+                    "chunk_id": item["chunk_id"],
+                    "audio_base64": audio_base64,
+                })
+
+            return JSONResponse(content={"chunks": result})
+
         raise HTTPException(status_code=404, detail="No audio found")
+
     
     else:
         redis_conn = redis.Redis(**redis_config)
@@ -161,7 +177,11 @@ async def dubbing(data: DubbingRequest):
             logger.info(f"📝 SSML đã được tạo:\n{ssml[:500]}...")
             audio_bytesio = tts.ssml_to_bytesio(ssml)
             audio_bytesio.seek(0)
-            return StreamingResponse(audio_bytesio, media_type="audio/mpeg")
+            # Trả về một danh sách chứa một BytesIO được mã hóa
+            audio_base64 = base64.b64encode(audio_bytesio.read()).decode('utf-8')
+            return JSONResponse(content={
+                "chunks": [{"chunk_id": "combined", "audio_base64": audio_base64}]
+            })
         except Exception as e:
             logger.exception(f"❌ Lỗi khi synthesize TTS: {e}")
             raise HTTPException(status_code=500, detail=f"TTS synthesis failed: {str(e)}")

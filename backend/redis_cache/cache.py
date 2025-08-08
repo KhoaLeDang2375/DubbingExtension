@@ -57,7 +57,7 @@ def translator_process(list_chunks_id: List[str], translator_func, redis_config,
 # Tiến trình tạo audio từ bản dịch
 def tts_process(redis_config: dict, total_chunks: int, tts_voice: str):
     redis_conn = redis.Redis(**redis_config)
-    tts = TextToSpeechModule(voice=tts_voice, output_format="mp3")
+    tts = TextToSpeechModule(voice=tts_voice, output_format="webm")
 
     logger.info("📗 [TTS] Bắt đầu lắng nghe queue...")
 
@@ -99,17 +99,26 @@ def tts_process(redis_config: dict, total_chunks: int, tts_voice: str):
     logger.info("🎉 [TTS] Hoàn tất toàn bộ chunks.")
 
 # Lấy danh sách audio BytesIO từ Redis
-def collect_audio_bytesio(list_chunk_ids: List[str], redis_config: dict) -> List[BytesIO]:
+from typing import Any
+
+def collect_audio_bytes_and_duration(list_chunk_ids: List[str], redis_config: dict) -> List[Dict[str, Any]]:
     redis_conn = redis.Redis(**redis_config)
-    audio_bytesio_list = []
+    result = []
 
     for chunk_id in list_chunk_ids:
         audio_bytes = redis_conn.get(f"audio:{chunk_id}")
-        if audio_bytes:
-            audio_bytesio_list.append(BytesIO(audio_bytes))
-        else:
+        if not audio_bytes:
             logger.warning(f"❌ Không tìm thấy audio cho {chunk_id}")
-    return audio_bytesio_list
+            continue
+
+        audio_io = BytesIO(audio_bytes)
+
+
+        result.append({
+            "chunk_id": chunk_id,
+            "audio_bytesio": audio_io
+        })
+    return result
 
 # Lấy bản dịch đã merge từ Redis
 def collect_merged_chunks_from_redis(list_chunk_ids: List[str], redis_config: dict) -> List[Dict]:
@@ -171,5 +180,5 @@ def multiprocessingForTTSAndTranslator(
         print(f"{chunk_id} -> Audio Bytes Length: {len(audio) if audio else '❌ No audio'}")
 
     return {
-        "ListBytesIO": collect_audio_bytesio(list_chunk_ids, redis_config)
+        "audio_chunks": collect_audio_bytes_and_duration(list_chunk_ids, redis_config)
     }

@@ -25,7 +25,7 @@ class TextToSpeechModule:
 
         self.speech_config = speechsdk.SpeechConfig(subscription=self.key, region=self.region)
         self.voice = voice
-        self.default_cps = 15  # ký tự mỗi giây
+        self.default_cps = 10  # ký tự mỗi giây
         self.current_format = None
         self.output_format = output_format
         self._set_output_format(output_format)
@@ -82,7 +82,7 @@ class TextToSpeechModule:
             smooth_cps = seg_cps * 0.7 + avg_cps * 0.3
             rate_factor = seg['duration'] / (text_len / smooth_cps)
             rate_percent = round((rate_factor - 1) * 100)
-            rate_percent = max(-50, min(100, rate_percent))
+            rate_percent = max(-30, min(50, rate_percent))
             rates.append(f"{'+' if rate_percent > 0 else ''}{rate_percent}%")
 
         return rates
@@ -111,7 +111,7 @@ class TextToSpeechModule:
                 current_end = seg.get('start', 0) + seg.get('duration', 0)
                 next_start = segments[i+1].get('start', current_end)
                 gap = next_start - current_end
-                if gap > 0.05:
+                if 0.3 < gap < 5.0:
                     ssml_parts.append(f'<break time="{int(gap * 1000)}ms"/>')
 
         ssml_parts.extend(['</voice>', '</speak>'])
