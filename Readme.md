@@ -42,58 +42,43 @@ git clone https://github.com/KhoaLeDang2375/DubbingExtension/tree/main/My_Dubbin
 </p>
 
 # V/ Directory structure
-```
-C:.
-|   [.gitignore](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/.gitignore)                  # Specifies files/folders for Git to ignore
-|   [Readme.md](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/Readme.md)                   # Project documentation in Markdown format
-|   [requirements.txt](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/requirements.txt)     # List of Python dependencies for the backend
-|
-+---backend                     # Backend server handling API and core logic
-|   |   [.env](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/.env)                  # Environment variables (API keys, configs, secrets)
-|   |   [main.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/main.py)            # Main entry point of the backend
-|   |   [run.bat](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/run.bat)            # Windows batch file to run the backend
-|   |
-|   +---Handler_Transcript       # Module to handle video transcript processing
-|   |   |   [Handler_Transcript.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Handler_Transcript/Handler_Transcript.py)
-|   |
-|   +---redis_cache              # Module for caching using Redis
-|   |   |   [cache.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/redis_cache/cache.py)
-|   |
-|   +---Text_To_Speech           # Module for converting text to speech (TTS)
-|   |   |   [TextToSpeech.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Text_To_Speech/TextToSpeech.py)
-|   |
-|   +---Translator               # Translation module
-|   |   |   [genAITranslator.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Translator/genAITranslator.py)   # Translation using Generative AI
-|   |   |   [tempCodeRunnerFile.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Translator/tempCodeRunnerFile.py) # Temporary file (should be removed from repo)
-|   |   |   [translator.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Translator/translator.py)              # Standard translation implementation
-|
-+---My_Dubbing_Extension         # Chrome extension for YouTube dubbing
-|   |   [background.js](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/background.js)            # Background script (manages API calls & events)
-|   |   [content_script.js](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/content_script.js)    # Injected script to interact with YouTube player
-|   |   [manifest.json](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/manifest.json)            # Chrome extension configuration (permissions, scripts, etc.)
-|   |   [options.html](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/options.html)              # Extension settings page UI
-|   |   [popup.js](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/popup.js)                      # Logic for the popup UI
-|   |
-|   \---assets
-|           [imgbtn.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/assets/imgbtn.png)       # Icon/button image used by the extension
-|
-+---out                          # Output and documentation resources
-|   +---Install_img              # Installation guide screenshots
-|   |       [install_1.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_1.jpg)
-|   |       [install_2.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_2.jpg)
-|   |       [install_3.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_3.jpg)
-|   |       [install_4.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_4.jpg)
-|   |       [install_5.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_5.jpg)
-|   |
-|   \---planuml                  # UML diagrams for architecture/design
-|       \---test
-|               [Backend.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/planuml/test/Backend.png)
-|               [Frontend.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/planuml/test/Frontend.png)
-|               [Multiprocessing.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/planuml/test/Multiprocessing.png)
-|               [Overview.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/planuml/test/Overview.png)
-|
-\---planuml                      # PlantUML source files
-        [test.plan](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/planuml/test.plan)
-
-```
-
+| Path | Description |
+|------|-------------|
+| [.gitignore](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/.gitignore) | Specifies files/folders for Git to ignore |
+| [Readme.md](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/Readme.md) | Project documentation in Markdown format |
+| [requirements.txt](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/requirements.txt) | List of Python dependencies for the backend |
+| **backend/** | Backend server handling API and core logic |
+| [backend/main.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/main.py) | Main entry point of the backend |
+| [backend/run.bat](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/run.bat) | Windows batch file to run the backend |
+| **backend/Handler_Transcript/** | Module to handle video transcript processing |
+| [backend/Handler_Transcript/Handler_Transcript.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Handler_Transcript/Handler_Transcript.py) | Main handler for transcripts |
+| **backend/redis_cache/** | Module for caching using Redis |
+| [backend/redis_cache/cache.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/redis_cache/cache.py) | Redis caching logic |
+| **backend/Text_To_Speech/** | Module for converting text to speech (TTS) |
+| [backend/Text_To_Speech/TextToSpeech.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Text_To_Speech/TextToSpeech.py) | TTS conversion logic |
+| **backend/Translator/** | Translation module |
+| [backend/Translator/genAITranslator.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Translator/genAITranslator.py) | Translation using Generative AI |
+| [backend/Translator/tempCodeRunnerFile.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Translator/tempCodeRunnerFile.py) | Temporary file (should be removed) |
+| [backend/Translator/translator.py](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/backend/Translator/translator.py) | Standard translation implementation |
+| **My_Dubbing_Extension/** | Chrome extension for YouTube dubbing |
+| [My_Dubbing_Extension/background.js](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/background.js) | Background script (manages API calls & events) |
+| [My_Dubbing_Extension/content_script.js](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/content_script.js) | Injected script to interact with YouTube player |
+| [My_Dubbing_Extension/manifest.json](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/manifest.json) | Chrome extension configuration |
+| [My_Dubbing_Extension/options.html](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/options.html) | Extension settings page UI |
+| [My_Dubbing_Extension/popup.js](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/popup.js) | Logic for the popup UI |
+| **My_Dubbing_Extension/assets/** | Extension assets |
+| [My_Dubbing_Extension/assets/imgbtn.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/My_Dubbing_Extension/assets/imgbtn.png) | Icon/button image used by the extension |
+| **out/** | Output and documentation resources |
+| **out/Install_img/** | Installation guide screenshots |
+| [out/Install_img/install_1.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_1.jpg) | Step 1 installation screenshot |
+| [out/Install_img/install_2.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_2.jpg) | Step 2 installation screenshot |
+| [out/Install_img/install_3.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_3.jpg) | Step 3 installation screenshot |
+| [out/Install_img/install_4.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_4.jpg) | Step 4 installation screenshot |
+| [out/Install_img/install_5.jpg](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/Install_img/install_5.jpg) | Step 5 installation screenshot |
+| **out/planuml/test/** | UML diagrams for architecture/design |
+| [out/planuml/test/Backend.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/planuml/test/Backend.png) | Backend architecture diagram |
+| [out/planuml/test/Frontend.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/planuml/test/Frontend.png) | Frontend architecture diagram |
+| [out/planuml/test/Multiprocessing.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/planuml/test/Multiprocessing.png) | Multiprocessing design diagram |
+| [out/planuml/test/Overview.png](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/out/planuml/test/Overview.png) | System overview diagram |
+| **planuml/** | PlantUML source files |
+| [planuml/test.plan](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/planuml/test.plan) | PlantUML test file |
