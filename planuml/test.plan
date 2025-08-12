@@ -1,0 +1,34 @@
+@startuml
+|Browser Extension|
+start
+:Send dubbing request;
+
+|Main Process|
+:Receive request;
+fork
+    |Translate Process|
+    :Get text chunks from cache;
+    repeat
+        :Translate chunk;
+        :Push translated text to Redis Queue;
+    repeat while (More chunks?) is (yes)
+    -->[no] end fork
+
+fork again
+    |TTS Process|
+    repeat
+        :Pop translated text from Redis Queue;
+        :Generate audio chunk;
+        :Store audio data in cache;
+    repeat while (More chunks?) is (yes)
+    -->[no] end fork
+end fork
+
+|Main Process|
+:Combine audio data from cache;
+:Send final audio to Browser Extension;
+
+|Browser Extension|
+:Play dubbed audio;
+stop
+@enduml
