@@ -10,3 +10,8 @@
 - Synchronize with the video to avoid delays or mismatched audio.
 - Seamlessly play multiple audio chunks with intelligent prefetching.
 - Customize voice settings (male/female voice, speed, tone).
+# III/ System architecture:
+!["Overview extension dubbing"](/out/planuml/test/Overview.png)
+!["Frontend interactions"](/out/planuml/test/Frontend.png)
+!["Backend interactions"](/out/planuml/test/Backend.png)
+!["Multiprocessing module operation "](/out/planuml/test/Multiprocessing.png)
