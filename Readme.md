@@ -33,6 +33,16 @@ git clone https://github.com/KhoaLeDang2375/DubbingExtension/tree/main/My_Dubbin
 ### 2.5 Click load packet and point to project folder
 !["step 2.5"](/out/Install_img/install_4.jpg)
 !["step 2.5"](/out/Install_img/install_5.jpg)
+
+
+# V/ How to Use
+- Open a YouTube video.
+- Select the target language and voice in the extension menu.
+- Click Start Dubbing.
+- The extension will:
+- Retrieve the video subtitles.
+- Translate them into your chosen language.
+- Generate dubbed audio and play it in sync.
 ## Video demo:
 
 <p align="center">
@@ -41,7 +51,7 @@ git clone https://github.com/KhoaLeDang2375/DubbingExtension/tree/main/My_Dubbin
   </a>
 </p>
 
-# V/ Directory structure
+# VI/ Directory structure
 | Path | Description |
 |------|-------------|
 | [.gitignore](https://github.com/KhoaLeDang2375/DubbingExtension/blob/main/.gitignore) | Specifies files/folders for Git to ignore |
