@@ -22,13 +22,14 @@ def push_all_chunks_to_redis(chunks: List[Dict], redis_config: dict):
         logger.exception("❌ Lỗi khi push transcript chunks vào Redis.")
 
 # Hàm dịch 1 chunk
-def translate_chunk(chunk: Dict, translator_func, handler, source_lang, target_lang) -> List[Dict]:
+def translate_chunk(chunk: List[Dict], translator_func, handler, source_lang, target_lang) -> List[Dict]:
     try:
         entries = chunk  # chunk là danh sách các câu nhỏ [{"text", ...}]
         texts = [entry["text"] for entry in entries]
+        need_text_trans = ' '.join(texts)
         logger.info("📘 [Translator] Đang dịch chunk...")
-        rawTextAfterTranslate = translator_func(texts=texts, source_lang=source_lang, target_langs=target_lang)
-        return handler.merge_chunk_translation(chunk=entries, translated_result=rawTextAfterTranslate)
+        rawTextAfterTranslate = translator_func(texts=need_text_trans, source_lang=source_lang, target_langs=target_lang)
+        return handler.merge_chunk_translation(chunk=entries, translated_result=rawTextAfterTranslate, target_language=target_lang)
     except Exception as e:
         logger.exception("❌ Lỗi khi dịch transcript.")
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
@@ -82,7 +83,7 @@ def tts_process(redis_config: dict, total_chunks: int, tts_voice: str):
             if not translated_bytes:
                 logger.error(f"[TTS] Không tìm thấy bản dịch cho {chunk_id}")
                 continue
-
+            logger.info(f"[TTS] Dang xử lý xong chunk: {chunk_id}")
             merged_chunk = json.loads(translated_bytes)
             ssml = tts.generate_ssml(merged_chunk)
             audio_bytesio = tts.ssml_to_bytesio(ssml)
@@ -116,7 +117,7 @@ def collect_audio_bytes_and_duration(list_chunk_ids: List[str], redis_config: di
 
         result.append({
             "chunk_id": chunk_id,
-            "audio_bytesio": audio_io
+            "audio_bytesio": audio_io,
         })
     return result
 

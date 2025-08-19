@@ -1,5 +1,5 @@
 from loguru import logger
-from typing import List, Dict
+from typing import List, Dict, Union 
 from fastapi import HTTPException
 from pydub import AudioSegment
 from pydub.utils import which
@@ -39,7 +39,7 @@ class Handler:
 
         except Exception as e:
             raise Exception(f"❌ Lỗi khi xử lý audio: {e}")
-    def split_transcript(self, entries, video_id, max_chars=400, max_items=30):
+    def split_transcript(self, entries, video_id, max_chars=400, max_items=20):
         chunks = []
         current_chunk = []
         current_chunk_len = 0
@@ -59,30 +59,70 @@ class Handler:
             startChunk = current_chunk[0]['start']
             chunks.append({'id': f'{video_id}_{startChunk}', "chunk": current_chunk})
         return chunks
-    def merge_chunk_translation(self, chunk: List[Dict], translated_result: List[Dict], target_language: str = "vi") -> List[Dict]:
+    def merge_chunk_translation(
+    self,
+    chunk: List[Dict], 
+    translated_result: List[Union[Dict, str]], 
+    target_language: str = "vi"
+) -> List[Dict]:
         """
-        Merge dữ liệu chunk gốc và kết quả dịch từ translator (Azure hoặc GenAI).
-        Đảm bảo mỗi entry có text_translated, start, duration cho TTS.
+        Merge dữ liệu chunk gốc và kết quả dịch (dạng list).
+        Phân bổ translated_text về từng segment theo tỷ lệ số từ.
 
         Args:
-            chunk: List[Dict] - danh sách các câu gốc [{text, start, duration, ...}]
-            translated_result: List[Dict] - kết quả dịch [{lang_code: translated_text}, ...]
+            chunk: List[Dict] - danh sách transcript gốc [{text, start, duration, ...}]
+            translated_result: List[Union[Dict, str]] - list dịch, ví dụ:
+                [{"vi": "Tôi thật sự không biết"}] hoặc ["Tôi thật sự không biết"]
             target_language: str - mã ngôn ngữ đích
 
         Returns:
-            List[Dict] - danh sách entry đã merge, mỗi entry có text_translated, start, duration
+            List[Dict] - danh sách entry [{text_translated, start, duration}]
         """
-        if not chunk or not translated_result or len(chunk) != len(translated_result):
-            raise ValueError("Số lượng câu gốc và câu đã dịch không khớp.")
+        if not chunk or not translated_result:
+            raise ValueError("Dữ liệu đầu vào không hợp lệ.")
+
+        # Lấy text dịch từ list
+        first_item = translated_result[0]
+        if isinstance(first_item, dict):
+            translated_text = first_item.get(target_language, "")
+        else:
+            translated_text = str(first_item)
+
+        if not translated_text:
+            raise ValueError("Không tìm thấy text dịch trong translated_result.")
+
+        # Tổng số từ gốc
+        total_words_src = sum(len(entry["text"].split()) for entry in chunk)
+        if total_words_src == 0:
+            raise ValueError("Không có từ nào trong chunk gốc.")
+
+        # Tách từ dịch
+        translated_words = translated_text.split()
+        total_words_trans = len(translated_words)
 
         merged = []
-        for entry, trans in zip(chunk, translated_result):
+        cursor = 0
+        for i, entry in enumerate(chunk):
+            src_word_count = len(entry["text"].split())
+            # Tính số từ dịch cho segment này
+            ratio = src_word_count / total_words_src
+            alloc = round(total_words_trans * ratio)
+
+            # Nếu là segment cuối thì lấy hết phần còn lại
+            if i == len(chunk) - 1:
+                seg_words = translated_words[cursor:]
+            else:
+                seg_words = translated_words[cursor:cursor + alloc]
+
+            cursor += alloc
+
             new_entry = {
-                "text_translated": trans.get(target_language) if isinstance(trans, dict) else trans,
+                "text_translated": " ".join(seg_words),
                 "start": entry.get("start"),
                 "duration": entry.get("duration")
             }
             merged.append(new_entry)
+
         return merged
     def mergeTranslatedTextToTranscript(self, transcript: List[Dict], merged_chunks: List[List[Dict]]) -> List[Dict]:
         """

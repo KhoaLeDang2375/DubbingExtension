@@ -44,13 +44,26 @@ git clone https://github.com/KhoaLeDang2375/DubbingExtension/tree/main/My_Dubbin
 - Translate them into your chosen language.
 - Generate dubbed audio and play it in sync.
 ## Video demo:
-
+### original video
 <p align="center">
-  <a href="https://youtu.be/-GQ69umfJWs">
-    <img src="https://img.youtube.com/vi/-GQ69umfJWs/maxresdefault.jpg" width="600">
+  <a href="https://www.youtube.com/watch?v=3foYyPDp0Ho">
+    <img src="https://img.youtube.com/vi/3foYyPDp0Ho/maxresdefault.jpg" width="300">
   </a>
 </p>
 
+### Vietnamese dubbing video
+<p align="center">
+  <a href="https://youtu.be/xw-DwhP32Qs">
+    <img src="https://img.youtube.com/vi/xw-DwhP32Qs/maxresdefault.jpg" width="300">
+  </a>
+</p>
+
+### Japanese dubbing video
+<p align="center">
+  <a href="https://youtu.be/y7G8E6WUAZE">
+    <img src="https://img.youtube.com/vi/y7G8E6WUAZE/maxresdefault.jpg" width="300">
+  </a>
+</p>
 # VI/ Directory structure
 | Path | Description |
 |------|-------------|

@@ -1,4 +1,4 @@
-const CHUNK_PREFETCH_COUNT = 5;
+const CHUNK_PREFETCH_COUNT = 3;
 
 // 👉 1. Lấy video ID từ URL YouTube
 function getYouTubeVideoId() {
@@ -38,10 +38,9 @@ function getAudioChunkViaBackground(videoId, chunkIds, need_translator) {
     chrome.runtime.sendMessage({
       type: "GET_TTS_URL",
       videoId: videoId,
-      list_chunks_id: chunkIds, // Gửi danh sách chunk IDs
+      list_chunks_id: chunkIds,
       need_translator: need_translator
     }, (response) => {
-      console.log(`[Content] Response nhận được cho chunks:`, response);
       if (chrome.runtime.lastError) {
         console.error(`❌ Lỗi Chrome Messaging:`, chrome.runtime.lastError);
         return reject(new Error("Lỗi Chrome Messaging: " + chrome.runtime.lastError.message));
@@ -57,7 +56,6 @@ function getAudioChunkViaBackground(videoId, chunkIds, need_translator) {
             return null;
           }
           const byteArray = new Uint8Array(chunk.audioData);
-          console.log(`[Content] Kích thước audioData cho chunk ${chunk.chunk_id}: ${byteArray.length}`);
           return { chunk_id: chunk.chunk_id, blob: new Blob([byteArray], { type: "audio/webm; codecs=opus" }) };
         }).filter(chunk => chunk !== null);
         resolve(blobs);
@@ -76,20 +74,20 @@ function injectButton() {
   const container = document.querySelector(".ytp-right-controls");
   if (!container) return;
 
-  const btn = document.createElement("button");
-  btn.id = "tts-dubber-btn";
-  btn.innerText = "🎙️";
-  btn.style.cssText = `
-    padding: 6px 10px;
-    margin-left: 12px;
-    background: #1d4da1;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  `;
-  container.appendChild(btn);
+  const iconUrl = chrome.runtime.getURL('assets/imgbtn.png');
 
+  const buttonHTML = `
+    <div class="youtube-dubbing-button" id="tts-dubber-btn">
+      <div class="youtube-dubbing-container">
+        <div class="youtube-dubbing-logo">
+          <img src="${iconUrl}" alt="youtube-dubbing">
+        </div>
+      </div>
+    </div>`;
+
+  container.insertAdjacentHTML('beforeend', buttonHTML);
+
+  const btn = document.getElementById("tts-dubber-btn");
   btn.addEventListener("click", async () => {
     const video = document.querySelector("video");
     if (!video) return alert("❌ Không tìm thấy video.");
@@ -101,8 +99,6 @@ function injectButton() {
 
     try {
       const { list_chunks, need_translator } = await getTotalChunks(videoId);
-      console.log("✅ Danh sách chunk:", list_chunks);
-
       startTTSPlayback(video, videoId, list_chunks, need_translator);
     } catch (error) {
       console.error("❌ Lỗi khi khởi động dubbing:", error);
@@ -124,7 +120,7 @@ async function startTTSPlayback(video, videoId, chunkList, need_translator) {
   const pendingChunks = {};
   let sourceBuffer;
   let isAudioPlaying = false;
-  // Debug audio
+
   audio.onplay = () => console.log("✅ [Audio] Bắt đầu phát.");
   audio.onpause = () => console.log("⏸️ [Audio] Tạm dừng.");
   audio.onended = () => {
@@ -143,38 +139,36 @@ async function startTTSPlayback(video, videoId, chunkList, need_translator) {
   };
 
   mediaSource.addEventListener("sourceopen", async () => {
-  console.log("MediaSource state:", mediaSource.readyState);
-  try {
-    sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs=opus');
-    sourceBuffer.mode = 'sequence';
-    console.log("✅ [MediaSource] sourceBuffer đã được khởi tạo.");
-    setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, state, pendingChunks, need_translator, audio);
-    sourceBuffer.addEventListener("error", (e) => {
+    try {
+      sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs=opus');
+      sourceBuffer.mode = 'sequence';
+      console.log("✅ [MediaSource] sourceBuffer đã được khởi tạo.");
+      setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, state, pendingChunks, need_translator, audio);
+      sourceBuffer.addEventListener("error", (e) => {
         console.error("❌ SourceBuffer error:", e);
-    });
-    sourceBuffer.addEventListener("updateend", async function onceStartPlayback() {
-      if (!isAudioPlaying && audio.buffered.length > 0 && audio.buffered.end(0) > 0) {
-        try {
-          await video.play();
-          await audio.play();
-          isAudioPlaying = true;
-          console.log("🔊 Audio started");
-        } catch (err) {
-          isAudioPlaying = false;
-          console.error("❌ audio.play() error:", err);
-          if (err.name === "NotAllowedError") {
-            console.warn("⚠️ Trình duyệt chặn auto-play, yêu cầu tương tác người dùng.");
+      });
+      sourceBuffer.addEventListener("updateend", async function onceStartPlayback() {
+        if (!isAudioPlaying && audio.buffered.length > 0 && audio.buffered.end(0) > 0) {
+          try {
+            await video.play();
+            await audio.play();
+            isAudioPlaying = true;
+            console.log("🔊 Audio started");
+          } catch (err) {
+            isAudioPlaying = false;
+            console.error("❌ audio.play() error:", err);
+            if (err.name === "NotAllowedError") {
+              console.warn("⚠️ Trình duyệt chặn auto-play, yêu cầu tương tác người dùng.");
+            }
           }
+          sourceBuffer.removeEventListener("updateend", onceStartPlayback);
         }
-        sourceBuffer.removeEventListener("updateend", onceStartPlayback);
-      }
-    });
-  } catch (err) {
-    console.error("❌ [MediaSource] Lỗi khi mở source:", err);
-  }
-});
+      });
+    } catch (err) {
+      console.error("❌ [MediaSource] Lỗi khi mở source:", err);
+    }
+  });
 
-  // Đồng bộ khi video pause/play
   video.addEventListener("pause", () => {
     if (isAudioPlaying) {
       audio.pause();
@@ -186,17 +180,17 @@ async function startTTSPlayback(video, videoId, chunkList, need_translator) {
   video.addEventListener("play", () => {
     if (!isAudioPlaying) {
       audio.currentTime = video.currentTime;
+      isAudioPlaying = true;
       audio.play().catch(err => {
         console.warn("⚠️ Audio resume failed:", err);
       });
     }
   });
 
-  // Xử lý khi tua video
-video.addEventListener("seeked", () => {
-  alert("⚠️ Không hỗ trợ tua khi đang dùng chế độ lồng tiếng TTS.");
-  video.currentTime = audio.currentTime; // quay lại đúng vị trí
-});
+  video.addEventListener("seeked", () => {
+    alert("⚠️ Không hỗ trợ tua khi đang dùng chế độ lồng tiếng TTS.");
+    video.currentTime = audio.currentTime;
+  });
 
   alert("🔊 Đã bật lồng tiếng TTS!");
 }
@@ -214,14 +208,11 @@ async function setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, st
     const filteredIds = chunkIds.filter(id => (!requestedChunks.has(id) && !appendedChunks.has(id)));
     if (filteredIds.length === 0) return;
 
-    console.log(` Fetching chunks: ${filteredIds.join(", ")}`);
     filteredIds.forEach(id => requestedChunks.add(id));
-
     try {
       const blobs = await getAudioChunkViaBackground(videoId, filteredIds, need_translator);
       const bufferPromises = blobs.map(chunk =>
         chunk.blob.arrayBuffer().then(buffer => {
-          console.log(`✅ Add pending chunk ${chunk.chunk_id} (${buffer.byteLength} bytes)`);
           pendingChunks[chunk.chunk_id] = buffer;
         }).catch(err => {
           console.error(`❌ Buffer error for ${chunk.chunk_id}:`, err);
@@ -229,7 +220,6 @@ async function setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, st
       );
       await Promise.all(bufferPromises);
 
-      // B. Khi tải xong, nếu appendQueue còn trống => append ngay
       if (appendQueue.length < PREFETCH_COUNT) {
         appendNextChunk();
       }
@@ -239,25 +229,22 @@ async function setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, st
         setTimeout(() => fetchChunks(chunkIds, retryCount + 1), 1000);
       } else {
         console.error(`❌ Bỏ qua sau ${RETRY_LIMIT} lần:`, chunkIds);
-        state.currentChunkIndex++;
+        // FIX: Không tăng state.currentChunkIndex, để appendNextChunk quản lý
+        filteredIds.forEach(id => requestedChunks.delete(id));
         appendNextChunk();
       }
     }
   }
 
   async function processAppendQueue() {
-    console.log(`[Debug] readyState=${mediaSource.readyState}, updating=${sourceBuffer.updating}, queueLen=${appendQueue.length}`);
     if (mediaSource.readyState !== "open" || sourceBuffer.updating || appendQueue.length === 0) {
       return;
     }
     const { chunkId, buffer } = appendQueue.shift();
-    console.log(`📦 Appending ${chunkId}, remaining queue=${appendQueue.length}`);
     try {
       sourceBuffer.appendBuffer(buffer);
       delete pendingChunks[chunkId];
       appendedChunks.add(chunkId);
-      state.currentChunkIndex++; 
-      // B. Gọi appendNextChunk ngay để đảm bảo queue luôn đầy
       appendNextChunk();
     } catch (e) {
       console.error(`❌ Append error for ${chunkId}:`, e);
@@ -268,16 +255,13 @@ async function setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, st
   async function appendNextChunk() {
     if (state.currentChunkIndex >= chunkList.length) return;
 
-    // Luôn duyệt để fill appendQueue tới PREFETCH_COUNT
     while (appendQueue.length < PREFETCH_COUNT && state.currentChunkIndex < chunkList.length) {
       const chunkId = `${videoId}_${chunkList[state.currentChunkIndex]}`;
       if (pendingChunks[chunkId] && !appendedChunks.has(chunkId) && !appendQueue.some(item => item.chunkId === chunkId)) {
         appendQueue.push({ chunkId, buffer: pendingChunks[chunkId]});
-        console.log(` Queueing ${chunkId} (queue size: ${appendQueue.length})`);
-      } else if (!pendingChunks[chunkId]&& !appendedChunks.has(chunkId)) {
-        console.log(`⏳ Chunk ${chunkId} chưa có, yêu cầu tải.`);
+      } else if (!pendingChunks[chunkId] && !appendedChunks.has(chunkId)) {
         fetchChunks([chunkId]);
-        break; // chờ tải xong mới tiếp
+        break;
       } else {
         state.currentChunkIndex++;
       }
@@ -285,12 +269,11 @@ async function setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, st
 
     processAppendQueue();
 
-    // C. Prefetch tiếp theo song song (tải trước cả khi buffer còn nhiều)
+    // FIX: Kiểm tra chunk bị bỏ sót trước khi prefetch xa
     const nextToPrefetch = [];
-    for (let i = state.currentChunkIndex + appendQueue.length; 
-         i < chunkList.length && nextToPrefetch.length < PREFETCH_COUNT; i++) {
+    for (let i = state.currentChunkIndex; i < state.currentChunkIndex + PREFETCH_COUNT && i < chunkList.length; i++) {
       const nextChunkId = `${videoId}_${chunkList[i]}`;
-      if (!pendingChunks[nextChunkId] && !requestedChunks.has(nextChunkId)&& !appendedChunks.has(nextChunkId)) {
+      if (!pendingChunks[nextChunkId] && !requestedChunks.has(nextChunkId) && !appendedChunks.has(nextChunkId)) {
         nextToPrefetch.push(nextChunkId);
       }
     }
@@ -301,26 +284,23 @@ async function setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, st
 
   sourceBuffer.addEventListener("updateend", () => {
     processAppendQueue();
-    logBufferedRanges();
   });
 
-  function logBufferedRanges() {
-    const ranges = [];
-    for (let i = 0; i < audio.buffered.length; i++) {
-      ranges.push(`[${audio.buffered.start(i).toFixed(2)} → ${audio.buffered.end(i).toFixed(2)}]`);
-    }
-    const bufferedEnd = audio.buffered.length > 0 ? audio.buffered.end(audio.buffered.length - 1) : 0;
-    const timeLeft = bufferedEnd - audio.currentTime;
-    console.log(`🔄 Buffered ranges: ${ranges.join(", ")} | ⏱️ Time left: ${timeLeft.toFixed(2)}s | Queue size: ${appendQueue.length}`);
-  }
-
-  // D. Monitor bộ đệm, nhưng vẫn prefetch ngay cả khi buffer còn nhiều
   const bufferMonitor = setInterval(() => {
     if (sourceBuffer.updating || audio.buffered.length === 0) return;
-    appendNextChunk(); // luôn cố gắng fill queue
+    const missingChunks = [];
+    for (let i = state.currentChunkIndex; i < state.currentChunkIndex + PREFETCH_COUNT && i < chunkList.length; i++) {
+      const chunkId = `${videoId}_${chunkList[i]}`;
+      if (!pendingChunks[chunkId] && !appendedChunks.has(chunkId) && !requestedChunks.has(chunkId)) {
+        missingChunks.push(chunkId);
+      }
+    }
+    if (missingChunks.length > 0) {
+      fetchChunks(missingChunks);
+    }
+    appendNextChunk();
   }, BUFFER_MONITOR_INTERVAL);
 
-  // Load initial big batch
   const initialChunkIds = [];
   for (let i = state.currentChunkIndex; i < state.currentChunkIndex + PREFETCH_COUNT && i < chunkList.length; i++) {
     const chunkId = `${videoId}_${chunkList[i]}`;
@@ -332,6 +312,7 @@ async function setupChunkQueue(mediaSource, sourceBuffer, chunkList, videoId, st
 
   audio.addEventListener("ended", () => clearInterval(bufferMonitor));
 }
+
 // 👉 8. Theo dõi thay đổi URL (YouTube SPA)
 let lastUrl = location.href;
 new MutationObserver(() => {
