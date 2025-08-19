@@ -21,7 +21,7 @@
 !["Multiprocessing module operation "](/out/planuml/test/Multiprocessing.png)
 # IV/ Installation instructions
 ## Step 1: Clone project
-git clone https://github.com/KhoaLeDang2375/DubbingExtension/tree/main/My_Dubbing_Extension
+git clone https://github.com/KhoaLeDang2375/DubbingExtension.git
 ## Step 2: 
 ### 2.1 Open  Chrome 
 ### 2.2 Click Extensions 
