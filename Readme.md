@@ -63,7 +63,8 @@ git clone https://github.com/KhoaLeDang2375/DubbingExtension/tree/main/My_Dubbin
   <a href="https://youtu.be/y7G8E6WUAZE">
     <img src="https://img.youtube.com/vi/y7G8E6WUAZE/maxresdefault.jpg" width="300">
   </a>
-</p>
+</p> 
+
 # VI/ Directory structure
 | Path | Description |
 |------|-------------|
