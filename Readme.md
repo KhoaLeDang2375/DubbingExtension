@@ -60,8 +60,8 @@ git clone https://github.com/KhoaLeDang2375/DubbingExtension.git
 
 ### Japanese dubbing video
 <p align="center">
-  <a href="https://youtu.be/WWg8CwNuFz4">
-    <img src="https://img.youtube.com/vi/WWg8CwNuFz4/maxresdefault.jpg" width="300">
+  <a href="https://youtu.be/CY9STdeMYcs">
+    <img src="https://img.youtube.com/vi/CY9STdeMYcs/maxresdefault.jpg" width="300">
   </a>
 </p> 
 
