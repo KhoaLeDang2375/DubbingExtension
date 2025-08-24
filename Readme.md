@@ -53,8 +53,8 @@ git clone https://github.com/KhoaLeDang2375/DubbingExtension.git
 
 ### Vietnamese dubbing video
 <p align="center">
-  <a href="https://youtu.be/xw-DwhP32Qs">
-    <img src="https://img.youtube.com/vi/xw-DwhP32Qs/maxresdefault.jpg" width="300">
+  <a href="https://youtu.be/WWg8CwNuFz4">
+    <img src="https://img.youtube.com/vi/WWg8CwNuFz4/maxresdefault.jpg" width="300">
   </a>
 </p>
 
