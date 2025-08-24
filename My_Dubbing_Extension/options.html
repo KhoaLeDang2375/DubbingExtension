@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cài đặt Extension</title>
+    <title>拡張機能設定</title>
     <script src="popup.js"></script>
     <style>
-        /* Reset và thiết lập cơ bản */
+        /* リセットと基本設定 */
         * {
             margin: 0;
             padding: 0;
@@ -27,7 +27,7 @@
             height: 100%;
         }
 
-        /* Card styles - Simplified for popup */
+        /* カードスタイル - ポップアップ用に簡素化 */
         .card {
             background: white;
             border-radius: 8px;
@@ -35,7 +35,7 @@
             margin-bottom: 8px;
         }
 
-        /* Header - Compact for popup */
+        /* ヘッダー - ポップアップ用にコンパクト */
         .header {
             padding: 16px;
             text-align: center;
@@ -55,7 +55,7 @@
             line-height: 1.3;
         }
 
-        /* Form styles - Compact */
+        /* フォームスタイル - コンパクト */
         .form-container {
             padding: 16px;
         }
@@ -94,7 +94,7 @@
             border-color: #9ca3af;
         }
 
-        /* Button styles - Compact */
+        /* ボタンスタイル - コンパクト */
         .save-button {
             width: 100%;
             padding: 10px 16px;
@@ -124,7 +124,7 @@
             transform: none;
         }
 
-        /* Success message - Compact */
+        /* 成功メッセージ - コンパクト */
         .success-message {
             background: #dcfce7;
             border: 1px solid #bbf7d0;
@@ -152,7 +152,7 @@
             }
         }
 
-        /* Footer - Compact */
+        /* フッター - コンパクト */
         .footer {
             text-align: center;
             color: #6b7280;
@@ -162,7 +162,7 @@
             line-height: 1.3;
         }
 
-        /* Optgroup styling - Adjusted for popup */
+        /* オプトグループスタイル - ポップアップ用に調整 */
         optgroup {
             font-weight: bold;
             color: #4b5563;
@@ -176,7 +176,7 @@
             padding: 4px;
         }
 
-        /* Scrollbar styling for popup */
+        /* ポップアップ用スクロールバースタイル */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -194,7 +194,7 @@
             background: #a8a8a8;
         }
 
-        /* Ensure popup doesn't exceed Chrome extension popup limits */
+        /* Chrome拡張ポップアップ制限を確保 */
         html, body {
             max-width: 380px;
             max-height: 600px;
@@ -203,110 +203,109 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
+        <!-- ヘッダー -->
         <div class="card">
             <div class="header">
-                <h1>🔧 Cài đặt Extension</h1>
-                <p>Cấu hình các tùy chọn dịch thuật và đọc văn bản theo ý muốn của bạn</p>
+                <h1> 拡張機能設定</h1>
             </div>
         </div>
 
-        <!-- Main Settings Form -->
+        <!-- メイン設定フォーム -->
         <div class="card">
             <div class="form-container">
                 <form id="settingsForm">
-                    <!-- Source Language Section -->
+                    <!-- 元言語セクション -->
                     <div class="form-group">
                         <label for="sourceLanguage" class="form-label">
-                            🌍 Ngôn ngữ nguồn
+                            🌐 元言語
                         </label>
                         <select id="sourceLanguage" class="form-select">
-                            <option value="">Chọn ngôn ngữ nguồn...</option>
-                            <option value="en">English (Tiếng Anh)</option>
-                            <option value="ja">Japanese (Tiếng Nhật)</option>
-                            <option value="vi">Vietnamese (Tiếng Việt)</option>
-                            <option value="zh">Chinese (Tiếng Trung)</option>
-                            <option value="ko">Korean (Tiếng Hàn)</option>
-                            <option value="fr">French (Tiếng Pháp)</option>
-                            <option value="de">German (Tiếng Đức)</option>
-                            <option value="es">Spanish (Tiếng Tây Ban Nha)</option>
-                            <option value="th">Thai (Tiếng Thái)</option>
-                            <option value="auto">Tự động phát hiện</option>
+                            <option value="">元言語を選択...</option>
+                            <option value="en">English (英語)</option>
+                            <option value="ja">Japanese (日本語)</option>
+                            <option value="vi">Vietnamese (ベトナム語)</option>
+                            <option value="zh">Chinese (中国語)</option>
+                            <option value="ko">Korean (韓国語)</option>
+                            <option value="fr">French (フランス語)</option>
+                            <option value="de">German (ドイツ語)</option>
+                            <option value="es">Spanish (スペイン語)</option>
+                            <option value="th">Thai (タイ語)</option>
+                            <option value="auto">自動検出</option>
                         </select>
                     </div>
 
-                    <!-- Target Language Section -->
+                    <!-- 対象言語セクション -->
                     <div class="form-group">
                         <label for="targetLanguage" class="form-label">
-                            🎯 Ngôn ngữ đích
+                            🎯 対象言語
                         </label>
                         <select id="targetLanguage" class="form-select">
-                            <option value="">Chọn ngôn ngữ đích...</option>
-                            <option value="vi">Vietnamese (Tiếng Việt)</option>
-                            <option value="en">English (Tiếng Anh)</option>
-                            <option value="ja">Japanese (Tiếng Nhật)</option>
+                            <option value="">対象言語を選択...</option>
+                            <option value="vi">Vietnamese (ベトナム語)</option>
+                            <option value="en">English (英語)</option>
+                            <option value="ja">Japanese (日本語)</option>
                         </select>
                     </div>
 
-                    <!-- Speaker Voice Section -->
+                    <!-- 音声読み上げセクション -->
                     <div class="form-group">
                         <label for="speakerVoice" class="form-label">
-                            🔊 Giọng đọc
+                            🔊 音声
                         </label>
-                        <select id="speakerVoice" class="form-select" placeholder="Select Text To Speech Voice">
-                            <optgroup label="Vietnamese" data-lang="vi">
-                                <option value="vi-VN-HoaiMyNeural">HoaiMy (Vietnamese, Female)</option>
-                                <option value="vi-VN-NamMinhNeural">NamMinh (Vietnamese, Male)</option>
+                        <select id="speakerVoice" class="form-select" placeholder="音声読み上げボイスを選択">
+                            <optgroup label="ベトナム語" data-lang="vi">
+                                <option value="vi-VN-HoaiMyNeural">HoaiMy (ベトナム語、女性)</option>
+                                <option value="vi-VN-NamMinhNeural">NamMinh (ベトナム語、男性)</option>
                             </optgroup>
-                            <optgroup label="English" data-lang="en">
-                                <option value="en-US-AlloyMultilingualNeural">Alloy (English, Male)</option>
-                                <option value="en-US-EchoMultilingualNeural">Echo (English, Male)</option>
-                                <option value="en-US-FableMultilingualNeural">Fable (English, Neutral)</option>
-                                <option value="en-US-OnyxMultilingualNeural">Onyx (English, Male)</option>
-                                <option value="en-US-NovaMultilingualNeural">Nova (English, Female)</option>
-                                <option value="en-US-ShimmerMultilingualNeural">Shimmer (English, Female)</option>
+                            <optgroup label="英語" data-lang="en">
+                                <option value="en-US-AlloyMultilingualNeural">Alloy (英語、男性)</option>
+                                <option value="en-US-EchoMultilingualNeural">Echo (英語、男性)</option>
+                                <option value="en-US-FableMultilingualNeural">Fable (英語、中性)</option>
+                                <option value="en-US-OnyxMultilingualNeural">Onyx (英語、男性)</option>
+                                <option value="en-US-NovaMultilingualNeural">Nova (英語、女性)</option>
+                                <option value="en-US-ShimmerMultilingualNeural">Shimmer (英語、女性)</option>
                             </optgroup>
-                            <optgroup label="Japanese" data-lang="ja">
-                                <option value="ja-JP-NanamiNeural">Nanami (Japanese, Female)</option>
-                                <option value="ja-JP-KeitaNeural">Keita (Japanese, Male)</option>
-                                <option value="ja-JP-AoiNeural">Aoi (Japanese, Female)</option>
-                                <option value="ja-JP-DaichiNeural">Daichi (Japanese, Male)</option>
-                                <option value="ja-JP-MayuNeural">Mayu (Japanese, Female)</option>
-                                <option value="ja-JP-NaokiNeural">Naoki (Japanese, Male)</option>
-                                <option value="ja-JP-ShioriNeural">Shiori (Japanese, Female)</option>
-                                <option value="ja-JP-MasaruMultilingualNeural">Masaru (Japanese, Male)</option>
+                            <optgroup label="日本語" data-lang="ja">
+                                <option value="ja-JP-NanamiNeural">Nanami (日本語、女性)</option>
+                                <option value="ja-JP-KeitaNeural">Keita (日本語、男性)</option>
+                                <option value="ja-JP-AoiNeural">Aoi (日本語、女性)</option>
+                                <option value="ja-JP-DaichiNeural">Daichi (日本語、男性)</option>
+                                <option value="ja-JP-MayuNeural">Mayu (日本語、女性)</option>
+                                <option value="ja-JP-NaokiNeural">Naoki (日本語、男性)</option>
+                                <option value="ja-JP-ShioriNeural">Shiori (日本語、女性)</option>
+                                <option value="ja-JP-MasaruMultilingualNeural">Masaru (日本語、男性)</option>
                             </optgroup>
                             </select>
 
                     </div>
 
-                    <!-- Translator Engine Section -->
+                    <!-- 翻訳エンジンセクション -->
                     <div class="form-group">
                         <label for="translatorEngine" class="form-label">
-                            🤖 Công cụ dịch
+                            🤖 翻訳エンジン
                         </label>
                         <select id="translatorEngine" class="form-select">
-                            <option value="GenAITranslator">AI Translator</option>
-                            <option value="AzureTranslator" selected>Azure Translator</option>
+                            <option value="GenAITranslator">AI翻訳</option>
+                            <option value="AzureTranslator" selected>Azure翻訳</option>
                         </select>
                     </div>
 
-                    <!-- Save Button -->
+                    <!-- 保存ボタン -->
                     <button type="submit" id="saveButton" class="save-button">
-                        💾 Lưu cài đặt
+                        💾 設定を保存
                     </button>
                 </form>
 
-                <!-- Success Message -->
+                <!-- 成功メッセージ -->
                 <div id="successMessage" class="success-message">
-                    ✅ Đã lưu thành công!
+                    ✅ 正常に保存されました！
                 </div>
             </div>
         </div>
 
-        <!-- Footer -->
+        <!-- フッター -->
         <div class="footer">
-            <p>Các cài đặt sẽ được đồng bộ trên tất cả thiết bị Chrome của bạn</p>
+            <p>設定はお使いのすべてのChromeデバイス間で同期されます</p>
         </div>
     </div>
 </body>

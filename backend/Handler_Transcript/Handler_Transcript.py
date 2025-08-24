@@ -39,7 +39,7 @@ class Handler:
 
         except Exception as e:
             raise Exception(f"❌ Lỗi khi xử lý audio: {e}")
-    def split_transcript(self, entries, video_id, max_chars=400, max_items=20):
+    def split_transcript(self, entries, video_id, max_chars=400, max_items=10):
         chunks = []
         current_chunk = []
         current_chunk_len = 0
